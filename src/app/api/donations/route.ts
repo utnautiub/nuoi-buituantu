@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { Donation } from "@/types/donation";
 
+// Force dynamic rendering (don't run at build time)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * GET /api/donations
  * Fetch all donations (public)

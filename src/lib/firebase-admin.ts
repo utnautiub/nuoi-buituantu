@@ -16,6 +16,13 @@ export function getAdminApp(): App {
   if (adminApp) return adminApp;
 
   if (getApps().length === 0) {
+    // Check if credentials exist (prevent build-time errors)
+    if (!process.env.FIREBASE_ADMIN_PROJECT_ID) {
+      throw new Error(
+        "Firebase Admin credentials not found. Please set FIREBASE_ADMIN_PROJECT_ID environment variable."
+      );
+    }
+
     // Parse the private key (handle escaped newlines)
     const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
       /\\n/g,
