@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
 import { Donation } from "@/types/donation";
 
 // Force dynamic rendering (don't run at build time)
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const revalidate = 0;
 
 /**
  * GET /api/donations
@@ -12,6 +12,8 @@ export const runtime = 'nodejs';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Lazy import to avoid build-time execution
+    const { getAdminDb } = await import("@/lib/firebase-admin");
     const db = getAdminDb();
     
     // Get query parameters

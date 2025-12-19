@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
 import { SePayWebhook } from "@/types/donation";
 
 // Force dynamic rendering (don't run at build time)
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const revalidate = 0;
 
 /**
  * POST /api/webhook/sepay
@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Lazy import to avoid build-time execution
+    const { getAdminDb } = await import("@/lib/firebase-admin");
     const db = getAdminDb();
 
     // Check if transaction already exists
