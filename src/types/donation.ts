@@ -12,7 +12,8 @@ export interface Donation {
   bankAccount: string;
   bankName: string;
   status: "pending" | "completed" | "failed";
-  createdAt: Date;
+  transactionDate?: string; // Original datetime string from SePay (VN time)
+  createdAt: Date; // Parsed Date object for sorting
   metadata?: Record<string, any>;
 }
 

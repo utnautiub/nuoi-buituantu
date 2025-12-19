@@ -74,6 +74,14 @@ export async function POST(request: NextRequest) {
       donorName = nameMatch[1].trim();
     }
 
+    // Parse transaction date with Vietnam timezone
+    // SePay sends: "2025-12-19 23:36:00" in VN time (UTC+7)
+    const parseVNDate = (dateString: string): Date => {
+      // Format: "2025-12-19 23:36:00" → "2025-12-19T23:36:00+07:00"
+      const isoString = dateString.replace(' ', 'T') + '+07:00';
+      return new Date(isoString);
+    };
+
     // Create donation record
     const donation = {
       transactionId: payload.id.toString(),
@@ -84,7 +92,9 @@ export async function POST(request: NextRequest) {
       bankAccount: payload.accountNumber,
       bankName: payload.gateway || "Unknown",
       status: "completed",
-      createdAt: new Date(payload.transactionDate),
+      // Store both: original string and parsed Date
+      transactionDate: payload.transactionDate, // Original string from SePay
+      createdAt: parseVNDate(payload.transactionDate), // Parsed Date for sorting
       metadata: {
         code: payload.code,
         transferType: payload.transferType,

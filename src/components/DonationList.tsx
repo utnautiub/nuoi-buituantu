@@ -5,6 +5,16 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Donation } from "@/types/donation";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
+// Format Vietnam date string directly (no timezone conversion)
+function formatVNDate(dateString: string): string {
+  // Input: "2025-12-19 23:36:00"
+  // Output: "23:36 19/12/2025"
+  const [datePart, timePart] = dateString.split(' ');
+  const [year, month, day] = datePart.split('-');
+  const [hour, minute] = timePart.split(':');
+  return `${hour}:${minute} ${day}/${month}/${year}`;
+}
+
 interface DonationListProps {
   donations: Donation[];
   isLoading?: boolean;
@@ -105,7 +115,10 @@ export function DonationList({
               </div>
             </div>
             <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 pt-2 border-t border-green-200 dark:border-gray-600">
-              {formatDate(donation.createdAt)}
+              {donation.transactionDate 
+                ? formatVNDate(donation.transactionDate)
+                : formatDate(donation.createdAt)
+              }
             </div>
           </div>
         ))}
