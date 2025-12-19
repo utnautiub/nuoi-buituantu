@@ -3,8 +3,6 @@ import { Donation } from "@/types/donation";
 
 // Force dynamic rendering (don't run at build time)
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-export const revalidate = 0;
 
 /**
  * GET /api/donations

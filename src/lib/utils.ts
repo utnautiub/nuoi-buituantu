@@ -1,9 +1,9 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { Timestamp } from "firebase/firestore";
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+import { Timestamp } from "firebase/firestore"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
 /**
@@ -37,7 +37,7 @@ export function formatDate(date: Date | Timestamp | string): string {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Asia/Ho_Chi_Minh", // Vietnam timezone (UTC+7)
+    timeZone: "Asia/Ho_Chi_Minh",
   }).format(d);
 }
 
@@ -51,29 +51,3 @@ export function formatVNDate(dateString: string): string {
   const [hour, minute] = timePart.split(':');
   return `${hour}:${minute} ${day}/${month}/${year}`;
 }
-
-/**
- * Download image from URL or data URL
- */
-export function downloadImage(dataUrl: string, filename: string) {
-  const link = document.createElement("a");
-  link.href = dataUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-/**
- * Copy text to clipboard
- */
-export async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (err) {
-    console.error("Failed to copy:", err);
-    return false;
-  }
-}
-

@@ -3,8 +3,6 @@ import { SePayWebhook } from "@/types/donation";
 
 // Force dynamic rendering (don't run at build time)
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-export const revalidate = 0;
 
 /**
  * POST /api/webhook/sepay
@@ -64,14 +62,58 @@ export async function POST(request: NextRequest) {
     }
 
     // Extract donor name from content
-    // Example: "NGUYEN VAN A chuyen tien" or "chuyen tien NGUYEN VAN A"
-    const contentUpper = payload.content.toUpperCase();
+    // SePay format examples:
+    // - "NGUYEN VAN A chuyen tien"
+    // - "Nuoi Bui Tuan Tu"
+    // - "Ma GD: 123456 - NGUYEN VAN A"
+    // - "FT25354419443518 Ung ho Bui Tuan Tu"
     let donorName = "Ẩn danh";
     
-    // Try to extract name from beginning
-    const nameMatch = contentUpper.match(/^([A-Z\s]+?)(?:CHUYEN|TIEN|NUOI|UNG HO|DONATE)/);
-    if (nameMatch && nameMatch[1].trim().length > 2) {
-      donorName = nameMatch[1].trim();
+    if (payload.content) {
+      const content = payload.content.trim();
+      
+      // Remove common prefixes/suffixes
+      let cleanContent = content
+        .replace(/^(MBVCB|FT)\.\d+\.?/i, '') // Remove MBVCB.123456 or FT123456
+        .replace(/Ma GD:?\s*\w+/gi, '') // Remove Ma GD: ABC123
+        .replace(/- Ma GD.*$/i, '') // Remove trailing "- Ma GD..."
+        .trim();
+      
+      // Remove common keywords to isolate name
+      const keywords = [
+        'chuyen tien', 'chuyen khoan', 'ck', 
+        'nuoi bui tuan tu', 'nuoi', 
+        'ung ho', 'ungho', 'donate', 
+        'bui tuan tu', 'buituantu',
+        'gui tien', 'guitien'
+      ];
+      
+      // Try to find name before or after keywords
+      for (const keyword of keywords) {
+        const regex = new RegExp(`(.+?)\\s*${keyword}|${keyword}\\s*(.+?)$`, 'i');
+        const match = cleanContent.match(regex);
+        if (match) {
+          const extracted = (match[1] || match[2] || '').trim();
+          if (extracted.length >= 3 && extracted.length <= 50) {
+            // Basic validation: should contain letters
+            if (/[a-zA-Z\u00C0-\u1EF9]/.test(extracted)) {
+              donorName = extracted;
+              break;
+            }
+          }
+        }
+      }
+      
+      // If no keyword match, try to extract from beginning (first 2-5 words)
+      if (donorName === "Ẩn danh") {
+        const words = cleanContent.split(/\s+/);
+        if (words.length >= 2 && words.length <= 5) {
+          const potentialName = words.slice(0, Math.min(4, words.length)).join(' ');
+          if (potentialName.length >= 3 && /[a-zA-Z\u00C0-\u1EF9]/.test(potentialName)) {
+            donorName = potentialName;
+          }
+        }
+      }
     }
 
     // Parse transaction date with Vietnam timezone
