@@ -16,7 +16,7 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
- * Format date to Vietnamese format
+ * Format date to Vietnamese format with timezone
  */
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
@@ -26,6 +26,7 @@ export function formatDate(date: Date | string): string {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh", // Vietnam timezone (UTC+7)
   }).format(d);
 }
 

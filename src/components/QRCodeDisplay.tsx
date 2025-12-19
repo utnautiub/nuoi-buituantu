@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Download, Copy, Check } from "lucide-react";
 import Image from "next/image";
-import { Button } from "./ui/button";
 
 export function QRCodeDisplay() {
   const [qrUrl, setQrUrl] = React.useState<string>("");
@@ -12,7 +11,6 @@ export function QRCodeDisplay() {
   const [downloading, setDownloading] = React.useState(false);
 
   React.useEffect(() => {
-    // Fetch bank config and QR from API
     async function fetchQR() {
       try {
         const response = await fetch("/api/qr");
@@ -38,20 +36,19 @@ export function QRCodeDisplay() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `qr-nuoi-buituantu-${Date.now()}.png`;
+      link.download = `qr-donate-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to download QR:", error);
-      alert("Không thể tải QR code. Vui lòng thử lại!");
     } finally {
       setDownloading(false);
     }
   };
 
-  const handleCopyAccountNumber = async () => {
+  const handleCopy = async () => {
     if (!bankInfo) return;
     try {
       await navigator.clipboard.writeText(bankInfo.accountNo);
@@ -64,84 +61,71 @@ export function QRCodeDisplay() {
 
   if (!qrUrl || !bankInfo) {
     return (
-      <div className="flex justify-center">
-        <div className="w-[300px] h-[300px] flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg">
-          <div className="animate-pulse text-center">
-            <div className="w-16 h-16 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-4"></div>
-            <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded mx-auto"></div>
-          </div>
-        </div>
+      <div className="space-y-4">
+        <div className="aspect-square w-full max-w-[280px] mx-auto bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
+        <div className="h-10 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* QR Code Image */}
-      <div className="flex justify-center">
-        <div className="relative p-4 bg-white dark:bg-gray-700 rounded-xl shadow-md">
+      {/* QR Code */}
+      <div className="w-full max-w-[280px] mx-auto">
+        <div className="relative aspect-square w-full bg-white dark:bg-gray-700 rounded-lg p-3 shadow-sm">
           <Image
             src={qrUrl}
-            alt="VietQR Code"
-            width={300}
-            height={300}
-            className="rounded"
+            alt="QR Code"
+            fill
+            className="object-contain p-2"
             priority
           />
         </div>
       </div>
 
-      {/* Account Information */}
-      <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Số tài khoản:
-          </span>
+      {/* Bank Info */}
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+          <span className="text-gray-600 dark:text-gray-400">STK:</span>
           <div className="flex items-center gap-2">
-            <span className="font-mono font-semibold text-gray-800 dark:text-white">
+            <span className="font-mono font-semibold text-gray-900 dark:text-white">
               {bankInfo.accountNo}
             </span>
             <button
-              onClick={handleCopyAccountNumber}
+              onClick={handleCopy}
               className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-              title="Copy số tài khoản"
             >
               {copied ? (
-                <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
               ) : (
-                <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                <Copy className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               )}
             </button>
           </div>
         </div>
-        <div className="flex justify-between">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Chủ tài khoản:
-          </span>
-          <span className="font-semibold text-gray-800 dark:text-white">
+        <div className="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+          <span className="text-gray-600 dark:text-gray-400">Tên:</span>
+          <span className="font-semibold text-gray-900 dark:text-white">
             {bankInfo.accountName}
           </span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Ngân hàng:
-          </span>
-          <span className="font-semibold text-gray-800 dark:text-white">
+        <div className="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+          <span className="text-gray-600 dark:text-gray-400">NH:</span>
+          <span className="font-semibold text-gray-900 dark:text-white">
             {bankInfo.bankName}
           </span>
         </div>
       </div>
 
-      {/* Action Button */}
-      <Button
+      {/* Download Button */}
+      <button
         onClick={handleDownload}
         disabled={downloading}
-        className="w-full flex items-center justify-center gap-2"
-        size="lg"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
       >
-        <Download className="w-5 h-5" />
-        {downloading ? "Đang tải..." : "Lưu mã QR"}
-      </Button>
+        <Download className="w-4 h-4" />
+        {downloading ? "Đang tải..." : "Lưu QR"}
+      </button>
     </div>
   );
 }
