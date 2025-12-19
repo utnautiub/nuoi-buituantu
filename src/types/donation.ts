@@ -2,6 +2,8 @@
  * Type definitions for donations
  */
 
+import { Timestamp } from "firebase/firestore";
+
 export interface Donation {
   id: string;
   transactionId: string;
@@ -13,7 +15,7 @@ export interface Donation {
   bankName: string;
   status: "pending" | "completed" | "failed";
   transactionDate?: string; // Original datetime string from SePay (VN time)
-  createdAt: Date; // Parsed Date object for sorting
+  createdAt: Date | Timestamp; // Support both Date and Firestore Timestamp
   metadata?: Record<string, any>;
 }
 

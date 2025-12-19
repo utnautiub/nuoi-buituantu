@@ -5,6 +5,8 @@ import { Moon, Sun, Globe } from "lucide-react";
 import { QRCodeDisplay } from "@/components/QRCodeDisplay";
 import { DonationList } from "@/components/DonationList";
 import { Donation } from "@/types/donation";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, limit, onSnapshot, where, Timestamp } from "firebase/firestore";
 
 const translations = {
   vi: {
@@ -68,27 +70,61 @@ export default function HomePage() {
     localStorage.setItem("language", newLang);
   };
 
+  // Real-time Firestore listener
   React.useEffect(() => {
-    async function fetchDonations() {
-      try {
-        const response = await fetch("/api/donations");
-        const data = await response.json();
-        
-        if (data.success) {
-          setDonations(data.donations || []);
-          setStats({
-            totalAmount: data.totalAmount || 0,
-            totalDonations: data.totalDonations || 0,
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch donations:", error);
-      } finally {
+    setIsLoading(true);
+    
+    // Query donations: status = completed, order by createdAt desc, limit 100
+    const q = query(
+      collection(db, "donations"),
+      where("status", "==", "completed"),
+      orderBy("createdAt", "desc"),
+      limit(100)
+    );
+
+    // Subscribe to real-time updates
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const donationsList: Donation[] = [];
+        let totalAmount = 0;
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const donation: Donation = {
+            id: doc.id,
+            transactionId: data.transactionId || doc.id,
+            amount: data.amount || 0,
+            description: data.description || "",
+            donorName: data.donorName || "Ẩn danh",
+            gateway: data.gateway || "sepay",
+            bankAccount: data.bankAccount || "",
+            bankName: data.bankName || "",
+            status: "completed",
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt : Timestamp.now(),
+            transactionDate: data.transactionDate,
+            metadata: data.metadata,
+          };
+          
+          donationsList.push(donation);
+          totalAmount += donation.amount;
+        });
+
+        setDonations(donationsList);
+        setStats({
+          totalAmount,
+          totalDonations: donationsList.length,
+        });
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Firestore listener error:", error);
         setIsLoading(false);
       }
-    }
+    );
 
-    fetchDonations();
+    // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
 
   const totalPages = Math.ceil(donations.length / itemsPerPage);
