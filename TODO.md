@@ -26,6 +26,7 @@
 ## 📋 Backlog
 
 ### Features
+
 - [ ] Thêm animation khi có donation mới
 - [ ] Implement real-time updates với Firebase Realtime Database
 - [ ] Thêm sound effect khi có donation
@@ -38,6 +39,7 @@
 - [ ] Donation certificate generator
 
 ### Technical Improvements
+
 - [ ] Add unit tests (Jest + React Testing Library)
 - [ ] Add E2E tests (Playwright)
 - [ ] Implement caching với Redis
@@ -51,6 +53,7 @@
 - [ ] Add performance monitoring
 
 ### Security
+
 - [ ] Implement CSRF protection
 - [ ] Add input validation
 - [ ] Add SQL injection protection (Firestore đã có sẵn)
@@ -60,6 +63,7 @@
 - [ ] Security audit
 
 ### UI/UX Improvements
+
 - [ ] Thêm loading states cho tất cả async operations
 - [ ] Improve error messages
 - [ ] Thêm empty states
@@ -72,6 +76,7 @@
 - [ ] Profile page cho donor
 
 ### Documentation
+
 - [ ] Add API documentation (Swagger/OpenAPI)
 - [ ] Add component storybook
 - [ ] Record demo video
@@ -80,6 +85,7 @@
 - [ ] Vietnamese translation cho all docs
 
 ### DevOps
+
 - [ ] Setup CI/CD pipeline (GitHub Actions)
 - [ ] Add automated testing in CI
 - [ ] Setup staging environment
@@ -119,4 +125,3 @@
 ---
 
 Last updated: 2024-12-19
-

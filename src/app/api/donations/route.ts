@@ -16,17 +16,26 @@ export async function GET(request: NextRequest) {
     
     // Fetch donations from Firestore
     const donationsRef = db.collection("donations");
+    
+    // Simple query without index requirement (temporary)
+    // TODO: Create composite index for status + createdAt query
     const snapshot = await donationsRef
-      .where("status", "==", "completed")
       .orderBy("createdAt", "desc")
       .limit(limit)
       .get();
+    
+    // Filter by status in memory (temporary workaround)
+    // Remove this after creating Firestore index
 
     const donations: Donation[] = [];
     let totalAmount = 0;
 
     snapshot.forEach((doc) => {
       const data = doc.data();
+      
+      // Filter by status (temporary until index is created)
+      if (data.status !== "completed") return;
+      
       const donation: Donation = {
         id: doc.id,
         transactionId: data.transactionId,

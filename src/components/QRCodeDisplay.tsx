@@ -133,7 +133,7 @@ export function QRCodeDisplay({
       <div className="text-sm text-gray-600 space-y-1">
         <p>💡 <strong>Hướng dẫn:</strong></p>
         <ol className="list-decimal list-inside space-y-1 ml-2">
-          <li>Nhấn nút "Lưu mã QR" để tải về thiết bị</li>
+          <li>Nhấn nút &quot;Lưu mã QR&quot; để tải về thiết bị</li>
           <li>Chọn ngân hàng của bạn ở phía dưới</li>
           <li>Mở app ngân hàng và quét QR vừa lưu</li>
         </ol>

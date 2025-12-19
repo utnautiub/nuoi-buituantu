@@ -199,7 +199,7 @@ FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVA
 5. Điền SePay webhook secret:
 
 ```env
-SEPAY_WEBHOOK_SECRET=my_super_secret_key_123456
+SEPAY_WEBHOOK_SECRET=93b16d75-6d58-4127-8b67-5eabf358a848
 ```
 
 6. Điền thông tin tài khoản ngân hàng:
