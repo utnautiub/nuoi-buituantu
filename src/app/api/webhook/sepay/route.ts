@@ -15,13 +15,17 @@ export const revalidate = 0;
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify webhook secret
+    // Verify webhook with API Key (SePay format: "Authorization: Apikey YOUR_KEY")
     const authHeader = request.headers.get("authorization");
     const expectedSecret = process.env.SEPAY_WEBHOOK_SECRET;
 
-    if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+    // SePay sends: "Apikey YOUR_KEY" or "Bearer YOUR_KEY"
+    const isValidApiKey = authHeader === `Apikey ${expectedSecret}`;
+    const isValidBearer = authHeader === `Bearer ${expectedSecret}`;
+
+    if (!expectedSecret || (!isValidApiKey && !isValidBearer)) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized" },
+        { success: false },
         { status: 401 }
       );
     }
@@ -34,7 +38,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!payload.transferAmount || !payload.content) {
       return NextResponse.json(
-        { success: false, error: "Invalid payload" },
+        { success: false },
         { status: 400 }
       );
     }
@@ -43,35 +47,36 @@ export async function POST(request: NextRequest) {
     const { getAdminDb } = await import("@/lib/firebase-admin");
     const db = getAdminDb();
 
-    // Check if transaction already exists
+    // Check if transaction already exists (prevent duplicate)
     const existingDoc = await db
       .collection("donations")
-      .where("transactionId", "==", payload.id)
+      .where("transactionId", "==", payload.id.toString())
       .limit(1)
       .get();
 
     if (!existingDoc.empty) {
       console.log("Transaction already processed:", payload.id);
-      return NextResponse.json({
-        success: true,
-        message: "Transaction already processed",
-      });
+      // Return 201 for success as per SePay docs
+      return NextResponse.json(
+        { success: true },
+        { status: 201 }
+      );
     }
 
-    // Extract donor name from content (if exists)
-    // Example content: "NGUYEN VAN A chuyen tien"
+    // Extract donor name from content
+    // Example: "NGUYEN VAN A chuyen tien" or "chuyen tien NGUYEN VAN A"
     const contentUpper = payload.content.toUpperCase();
     let donorName = "Ẩn danh";
     
-    // Try to extract name (simple pattern matching)
-    const nameMatch = contentUpper.match(/^([A-Z\s]+?)(?:CHUYEN|TIEN|NUOI|UNG HO)/);
+    // Try to extract name from beginning
+    const nameMatch = contentUpper.match(/^([A-Z\s]+?)(?:CHUYEN|TIEN|NUOI|UNG HO|DONATE)/);
     if (nameMatch && nameMatch[1].trim().length > 2) {
       donorName = nameMatch[1].trim();
     }
 
     // Create donation record
     const donation = {
-      transactionId: payload.id,
+      transactionId: payload.id.toString(),
       amount: payload.transferAmount,
       description: payload.content,
       donorName,
@@ -94,17 +99,15 @@ export async function POST(request: NextRequest) {
 
     console.log("Donation saved successfully:", donation);
 
-    return NextResponse.json({
-      success: true,
-      message: "Webhook processed successfully",
-    });
+    // Return 201 for success as per SePay documentation
+    return NextResponse.json(
+      { success: true },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Webhook processing error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Internal server error",
-      },
+      { success: false },
       { status: 500 }
     );
   }
@@ -115,10 +118,9 @@ export async function POST(request: NextRequest) {
  * Test endpoint to verify webhook is accessible
  */
 export async function GET() {
-  return NextResponse.json({
-    success: true,
-    message: "SePay webhook endpoint is ready",
-    timestamp: new Date().toISOString(),
-  });
+  return NextResponse.json(
+    { success: true },
+    { status: 200 }
+  );
 }
 
