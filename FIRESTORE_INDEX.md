@@ -244,3 +244,4 @@ Indexes ảnh hưởng đến cost:
 **Lưu ý:** Sau khi tạo index, xóa code workaround và revert về query gốc để có performance tốt nhất!
 
 
+

@@ -162,3 +162,4 @@ Nếu vẫn gặp lỗi, kiểm tra:
 1. Browser console để xem error message chi tiết
 2. Firebase Console → Authentication → Users để xem user đã được tạo chưa
 3. Network tab trong DevTools để xem request có fail không
+

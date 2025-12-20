@@ -89,7 +89,8 @@ export default function HomePage() {
     name: string;
     nameEn: string;
     price: number;
-    period: "month" | "year" | "lifetime";
+    period: "day" | "month" | "year" | "lifetime";
+    periodDays?: number;
     emoji: string;
   } | undefined>(undefined);
 
@@ -402,6 +403,7 @@ export default function HomePage() {
               nameEn: tier.nameEn,
               price: tier.price,
               period: tier.period,
+              periodDays: tier.periodDays,
               emoji: tier.emoji,
             });
             scrollToDonate();

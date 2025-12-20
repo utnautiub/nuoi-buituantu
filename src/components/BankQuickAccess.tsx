@@ -57,10 +57,12 @@ export function BankQuickAccess({
       try {
         if (isIOS && bank.iosScheme) {
           window.location.href = bank.iosScheme;
-        } else if (isAndroid && bank.androidScheme) {
-          window.location.href = bank.androidScheme;
-        } else if (bank.deepLink) {
-          window.location.href = bank.deepLink;
+        } else if (isAndroid && bank.androidPackage) {
+          // Use intent URL for Android
+          const intentUrl = `intent://#Intent;scheme=${bank.code.toLowerCase()};package=${bank.androidPackage};end`;
+          window.location.href = intentUrl;
+        } else if (bank.universalLink) {
+          window.location.href = bank.universalLink;
         } else {
           // Fallback: open VietQR link
           window.open(vietQRUrl, "_blank");
