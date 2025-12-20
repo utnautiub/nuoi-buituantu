@@ -1,9 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Moon, Sun, Globe, Search, ArrowDown, ArrowUp, Check, Languages, Monitor } from "lucide-react";
+import { Moon, Sun, Globe, Search, ArrowDown, ArrowUp, Check, Languages, Monitor, Sparkles, LogIn } from "lucide-react";
 import { QRCodeDisplay } from "@/components/QRCodeDisplay";
 import { DonationList } from "@/components/DonationList";
+import { PricingTiers } from "@/components/PricingTiers";
+import { HeroSection } from "@/components/HeroSection";
+import { GenerativeArtCanvas } from "@/components/GenerativeArtCanvas";
+import { PerksSection } from "@/components/PerksSection";
+import { DonationLimitBanner } from "@/components/DonationLimitBanner";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { HallOfFameStats } from "@/components/HallOfFameStats";
+import { useAuth } from "@/contexts/AuthContext";
 import { Donation } from "@/types/donation";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, onSnapshot, where, Timestamp } from "firebase/firestore";
@@ -26,8 +35,8 @@ const translations = {
     title: "Nuôi Bùi Tuấn Tú",
     donations: "Lượt donate",
     totalAmount: "Tổng donate",
-    qrTitle: "Donate QR Code",
-    statement: "Danh sách donate",
+    qrTitle: "Donate nhanh qua QR",
+    statement: "Bảng vàng danh dự",
     search: "Tìm theo tên, nội dung, số tiền...",
     sortBy: "Sắp xếp theo",
     sortDate: "Thời gian",
@@ -36,13 +45,15 @@ const translations = {
     orderAsc: "Cũ nhất / Thấp nhất",
     clearFilter: "Xóa bộ lọc",
     results: "kết quả",
+    hallOfFame: "Hall of Fame 🏆",
+    recentSupporters: "Người ủng hộ gần đây",
   },
   en: {
     title: "Support Bui Tuan Tu",
     donations: "Donations",
     totalAmount: "Total Amount",
-    qrTitle: "Donate QR Code",
-    statement: "Donation List",
+    qrTitle: "Quick Donate via QR",
+    statement: "Hall of Fame",
     search: "Search by name, message, amount...",
     sortBy: "Sort by",
     sortDate: "Date",
@@ -51,6 +62,8 @@ const translations = {
     orderAsc: "Oldest / Lowest",
     clearFilter: "Clear filter",
     results: "results",
+    hallOfFame: "Hall of Fame 🏆",
+    recentSupporters: "Recent Supporters",
   },
 };
 
@@ -67,9 +80,33 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"date" | "amount">("date");
   const [sortOrder, setSortOrder] = React.useState<"desc" | "asc">("desc");
-  const itemsPerPage = 20;
+  const itemsPerPage = 5;
+
+  const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const [authTab, setAuthTab] = React.useState<"login" | "register" | "reset">("login");
+  const [selectedTier, setSelectedTier] = React.useState<{
+    id: string;
+    name: string;
+    nameEn: string;
+    price: number;
+    period: "month" | "year" | "lifetime";
+    emoji: string;
+  } | undefined>(undefined);
+
+  const { user, loading: authLoading } = useAuth();
+
+  const pricingRef = React.useRef<HTMLDivElement>(null);
+  const donateRef = React.useRef<HTMLDivElement>(null);
 
   const t = translations[language];
+
+  const scrollToPricing = () => {
+    pricingRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToDonate = () => {
+    donateRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   React.useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -196,28 +233,47 @@ export default function HomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      {/* Animated background gradient */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-green-100/20 via-transparent to-transparent dark:from-green-900/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-blue-100/20 via-transparent to-transparent dark:from-blue-900/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      {/* Generative Art Canvas Background */}
+      <GenerativeArtCanvas />
 
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-950/60 transition-all duration-300 shadow-sm">
         <div className="container flex h-16 max-w-7xl mx-auto items-center justify-between px-4 md:px-6">
-          {/* Logo - Centered on mobile, left on desktop */}
+          {/* Logo */}
           <div className="flex items-center gap-3 flex-1 justify-start">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br from-green-500 via-emerald-500 to-green-600 flex items-center justify-center shadow-lg ring-2 ring-green-500/20 dark:ring-green-400/20 flex-shrink-0">
-              <span className="text-white font-bold text-lg sm:text-xl leading-none">N</span>
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 flex items-center justify-center shadow-lg ring-2 ring-purple-500/20 dark:ring-purple-400/20 flex-shrink-0">
+              <Sparkles className="text-white w-5 h-5" />
             </div>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 dark:from-green-400 dark:via-emerald-400 dark:to-green-400 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto] leading-tight">
+            <h1 className="hidden sm:block text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 dark:from-purple-400 dark:via-pink-400 dark:to-blue-400 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto] leading-tight">
               {t.title}
             </h1>
           </div>
           
           {/* Actions */}
           <div className="flex items-center gap-2">
+            {/* User Menu or Login Button */}
+            {authLoading ? (
+              <div className="h-9 w-20 bg-slate-100 dark:bg-slate-800 rounded-full animate-pulse" />
+            ) : user ? (
+              <UserMenu 
+                language={language}
+              />
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setAuthTab("login");
+                  setShowAuthModal(true);
+                }}
+                className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                {language === "vi" ? "Đăng nhập" : "Login"}
+              </Button>
+            )}
+
             {/* Language Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -323,19 +379,51 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      {/* Hero Section */}
+      <HeroSection 
+        language={language} 
+        onScrollToPricing={scrollToPricing}
+        onScrollToDonate={scrollToDonate}
+        stats={{
+          supporters: stats.totalDonations,
+          projects: 42,
+          coffees: stats.totalAmount,
+        }}
+      />
+
+      {/* Pricing Tiers Section */}
+      <div ref={pricingRef} className="container max-w-7xl mx-auto px-4 md:px-6">
+        <PricingTiers 
+          language={language}
+          onSelectTier={(tier) => {
+            setSelectedTier({
+              id: tier.id,
+              name: tier.name,
+              nameEn: tier.nameEn,
+              price: tier.price,
+              period: tier.period,
+              emoji: tier.emoji,
+            });
+            scrollToDonate();
+          }}
+        />
+      </div>
+
+      {/* Perks Section */}
+      <PerksSection language={language} />
+      {/* Donate & Stats Section */}
+      <main ref={donateRef} className="container max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-16">
         {/* Stats Cards */}
         <div className="grid gap-4 md:gap-6 md:grid-cols-2 mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
           <Card className="group hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-slate-200 dark:border-slate-800 overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 dark:from-green-500/20 dark:to-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
             <CardHeader className="pb-4 pt-6 relative z-10">
               <CardDescription className="text-sm font-medium text-center">{t.donations}</CardDescription>
               <CardTitle className="text-5xl md:text-6xl font-bold tracking-tight text-center">
                 {isLoading ? (
                   <Skeleton className="h-14 w-28 mx-auto bg-slate-200 dark:bg-slate-800" />
                 ) : (
-                  <span className="bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                     {stats.totalDonations}
                   </span>
                 )}
@@ -364,40 +452,67 @@ export default function HomePage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:gap-8 lg:grid-cols-5">
+        <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-6 items-start">
           {/* QR Section */}
-          <div className="lg:col-span-2 animate-in fade-in slide-in-from-left-4 duration-700 delay-150">
-            <Card className="border-slate-200 dark:border-slate-800 shadow-xl h-full hover:shadow-2xl transition-all duration-300">
+          <div className="lg:col-span-1 animate-in fade-in slide-in-from-left-4 duration-700 delay-150">
+            <Card className="border-slate-200 dark:border-slate-800 shadow-xl hover:shadow-2xl transition-all duration-300">
               <CardHeader className="pb-6 pt-6">
                 <CardTitle className="text-xl text-center">{t.qrTitle}</CardTitle>
               </CardHeader>
-              <CardContent className="pb-8">
-                <QRCodeDisplay language={language} />
+              <CardContent className="pb-8 space-y-4">
+                {/* Donation Limit Banner */}
+                <DonationLimitBanner 
+                  language={language}
+                  onViewHistory={() => {
+                    // Navigate to history page if logged in
+                    if (user) {
+                      window.location.href = "/dashboard/history";
+                    } else {
+                      setShowAuthModal(true);
+                      setAuthTab("login");
+                    }
+                  }}
+                />
+                
+                <QRCodeDisplay 
+                  language={language}
+                  selectedTier={selectedTier}
+                  onTierChange={(tier) => setSelectedTier(tier)}
+                  onScrollToPricing={scrollToPricing}
+                />
               </CardContent>
             </Card>
           </div>
 
           {/* Donation List */}
-          <div className="lg:col-span-3 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
-            <Card className="border-slate-200 dark:border-slate-800 shadow-xl h-full flex flex-col hover:shadow-2xl transition-all duration-300">
+          <div className="lg:col-span-2 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
+            <Card className="border-slate-200 dark:border-slate-800 shadow-xl flex flex-col hover:shadow-2xl transition-all duration-300 max-w-full overflow-hidden">
               <CardHeader className="pb-4 pt-6">
-                <CardTitle className="text-xl">{t.statement}</CardTitle>
+                <CardTitle className="text-xl">{t.hallOfFame}</CardTitle>
+              </CardHeader>
+              
+              <CardContent className="flex-1 flex flex-col space-y-6">
+                {/* Stats Section */}
+                <HallOfFameStats donations={donations} language={language} />
+                
+                {/* Divider */}
+                <div className="border-t border-slate-200 dark:border-slate-800" />
                 
                 {/* Search and Filter */}
-                <div className="space-y-4 pt-6">
+                <div className="space-y-4">
                   <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-hover:text-green-500 transition-colors duration-200" />
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-hover:text-purple-500 transition-colors duration-200" />
                     <Input
                       placeholder={t.search}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 h-11 border-slate-300 dark:border-slate-700 focus-visible:ring-green-500 dark:focus-visible:ring-green-400 transition-all duration-200"
+                      className="pl-10 h-11 border-slate-300 dark:border-slate-700 focus-visible:ring-purple-500 dark:focus-visible:ring-purple-400 transition-all duration-200"
                     />
                   </div>
                   
                   <div className="flex items-center gap-3">
                     <Select value={sortBy} onValueChange={(val) => setSortBy(val as "date" | "amount")}>
-                      <SelectTrigger className="h-11 border-slate-300 dark:border-slate-700 focus:ring-green-500 dark:focus:ring-green-400">
+                      <SelectTrigger className="h-11 border-slate-300 dark:border-slate-700 focus:ring-purple-500 dark:focus:ring-purple-400">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -413,7 +528,7 @@ export default function HomePage() {
                         e.preventDefault();
                         setSortOrder(sortOrder === "desc" ? "asc" : "desc");
                       }}
-                      className="h-11 w-11 flex-shrink-0 border-slate-300 dark:border-slate-700 hover:bg-green-50 dark:hover:bg-green-950/20 hover:border-green-500 dark:hover:border-green-400 active:scale-95 transition-all duration-200"
+                      className="h-11 w-11 flex-shrink-0 border-slate-300 dark:border-slate-700 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-500 dark:hover:border-purple-400 active:scale-95 transition-all duration-200"
                       type="button"
                     >
                       {sortOrder === "desc" ? (
@@ -434,7 +549,7 @@ export default function HomePage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setSearchQuery("")}
-                          className="h-auto p-0 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-transparent"
+                          className="h-auto p-0 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-transparent"
                         >
                           {t.clearFilter}
                         </Button>
@@ -442,9 +557,8 @@ export default function HomePage() {
                     </div>
                   )}
                 </div>
-              </CardHeader>
-              
-              <CardContent className="pt-2 flex-1 flex flex-col">
+                
+                {/* Donation List */}
                 <DonationList
                   donations={paginatedDonations}
                   isLoading={isLoading}
@@ -459,6 +573,31 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm py-8">
+        <div className="container max-w-7xl mx-auto px-4 md:px-6">
+          <div className="text-center text-sm text-slate-600 dark:text-slate-400">
+            <p>
+              {language === "vi" 
+                ? "💝 Cảm ơn bạn đã ủng hộ! Mọi đóng góp đều được trân trọng và sử dụng có trách nhiệm."
+                : "💝 Thank you for your support! Every contribution is appreciated and used responsibly."
+              }
+            </p>
+            <p className="mt-2 text-xs">
+              Made with 💖 and lots of ☕
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultTab={authTab}
+        language={language}
+      />
     </div>
   );
 }

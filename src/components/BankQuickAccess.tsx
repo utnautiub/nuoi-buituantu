@@ -9,6 +9,7 @@ interface BankQuickAccessProps {
   accountNo: string;
   accountName: string;
   language: "vi" | "en";
+  description?: string;
 }
 
 const translations = {
@@ -31,6 +32,7 @@ export function BankQuickAccess({
   accountNo,
   accountName,
   language,
+  description = "",
 }: BankQuickAccessProps) {
   const [isMobile, setIsMobile] = React.useState(false);
   const [showList, setShowList] = React.useState(false);
@@ -43,40 +45,41 @@ export function BankQuickAccess({
   const recipientBank = VIETNAMESE_BANKS.find((b) => b.bin === bankBin);
 
   const handleBankClick = (bank: typeof VIETNAMESE_BANKS[0]) => {
-    // Generate VietQR URL for this specific bank
-    const vietQRUrl = `https://img.vietqr.io/image/${bankBin}-${accountNo}-compact2.jpg?addInfo=Nuoi+Bui+Tuan+Tu&accountName=${encodeURIComponent(accountName)}`;
+    // Generate VietQR URL with description
+    const transferInfo = description.trim() || "Nuoi Bui Tuan Tu";
+    const vietQRUrl = `https://img.vietqr.io/image/${bankBin}-${accountNo}-compact2.jpg?addInfo=${encodeURIComponent(transferInfo)}&accountName=${encodeURIComponent(accountName)}`;
 
-    // Try to open banking app
+    // Try to open banking app with retry logic
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
 
-    if (isIOS) {
-      // iOS: Try universal link or URL scheme
-      if (bank.iosScheme) {
-        window.location.href = bank.iosScheme;
-        // Fallback: open in new tab after delay
-        setTimeout(() => {
+    const attemptOpen = (attempt: number = 1) => {
+      try {
+        if (isIOS && bank.iosScheme) {
+          window.location.href = bank.iosScheme;
+        } else if (isAndroid && bank.androidScheme) {
+          window.location.href = bank.androidScheme;
+        } else if (bank.deepLink) {
+          window.location.href = bank.deepLink;
+        } else {
+          // Fallback: open VietQR link
           window.open(vietQRUrl, "_blank");
-        }, 1500);
-      } else {
-        window.open(vietQRUrl, "_blank");
-      }
-    } else if (isAndroid) {
-      // Android: Try intent or package
-      if (bank.androidPackage) {
-        const intentUrl = `intent://#Intent;scheme=${bank.code.toLowerCase()};package=${bank.androidPackage};end`;
-        window.location.href = intentUrl;
-        // Fallback
-        setTimeout(() => {
+        }
+
+        // Retry up to 3 times with delay for better success rate
+        if (attempt < 3) {
+          setTimeout(() => attemptOpen(attempt + 1), 1000);
+        }
+      } catch (error) {
+        console.error("Failed to open bank app:", error);
+        // Final fallback
+        if (attempt === 3) {
           window.open(vietQRUrl, "_blank");
-        }, 1500);
-      } else {
-        window.open(vietQRUrl, "_blank");
+        }
       }
-    } else {
-      // Desktop: just open VietQR
-      window.open(vietQRUrl, "_blank");
-    }
+    };
+
+    attemptOpen();
   };
 
   if (!isMobile) {

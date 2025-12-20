@@ -122,3 +122,4 @@ export function openAppStore(bank: Bank): void {
   }
 }
 
+

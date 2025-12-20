@@ -10,6 +10,7 @@ export interface Donation {
   amount: number;
   description: string;
   donorName?: string;
+  userId?: string; // Firebase user ID if logged in
   gateway: "sepay" | "manual";
   bankAccount: string;
   bankName: string;

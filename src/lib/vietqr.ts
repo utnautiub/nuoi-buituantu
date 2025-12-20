@@ -88,3 +88,4 @@ export async function fetchQRAsDataUrl(qrUrl: string): Promise<string> {
   }
 }
 
+
